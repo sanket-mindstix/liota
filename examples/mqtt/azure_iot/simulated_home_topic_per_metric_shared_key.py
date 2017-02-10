@@ -141,7 +141,7 @@ def generate_sas_token(uri, key, policy_name=None, expiry=3600):
 # GenericMqtt DCC has enclose_metadata option.  It can be used to enclose EdgeSystem, Device and Metric names
 # along with the sensor data payload of a Metric.
 #
-# This example showcases publishing Metrics using (b) and (c) without enclose_metadata
+# This example showcases publishing Metrics using (c) without enclose_metadata.
 # ------------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -162,9 +162,6 @@ if __name__ == '__main__':
     # Encapsulate QoS related parameters
     qos_details = QoSDetails(config['in_flight'], config['queue_size'], config['retry'])
 
-    #  Health info Publish Topic for an EdgeSystem
-    mqtt_msg_attr = MqttMessagingAttributes(pub_topic=config['EdgeSystemHealthPubTopic'])
-
     #  Initializing GenericMqtt using MqttDccComms
     #  Connecting to AzureIoT
     azure = GenericMqtt(MqttDccComms(edge_system.name, config['BrokerURL'], config['BrokerPort'],
@@ -172,7 +169,7 @@ if __name__ == '__main__':
                                      client_id=config["device_id"], clean_session=True, userdata=config['userdata'],
                                      protocol=config['protocol'], transport=['transport'],
                                      conn_disconn_timeout=config['ConnectDisconnectTimeout'],
-                                     mqtt_msg_attr=mqtt_msg_attr, enable_authentication=True), enclose_metadata=True)
+                                     mqtt_msg_attr=None, enable_authentication=True), enclose_metadata=False)
 
     #  Registering EdgeSystem
     reg_edge_system = azure.register(edge_system)
@@ -188,6 +185,8 @@ if __name__ == '__main__':
     #  Registering Metric and creating Parent-Child relationship
     reg_cpu_utilization = azure.register(cpu_utilization)
     azure.create_relationship(reg_edge_system, reg_cpu_utilization)
+
+    reg_cpu_utilization.msg_attr = MqttMessagingAttributes(pub_topic=config['EdgeSystemHealthPubTopic'])
 
     #  Publishing Registered CPU Utilization Metric to Azure
     #  Publish topic for this metric is config['CustomPubTopic']

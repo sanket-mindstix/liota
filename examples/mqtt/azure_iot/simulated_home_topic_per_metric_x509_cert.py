@@ -114,7 +114,7 @@ def living_room_luminance():
 # GenericMqtt DCC has enclose_metadata option.  It can be used to enclose EdgeSystem, Device and Metric names
 # along with the sensor data payload of a Metric.
 #
-# This example showcases publishing Metrics using (b) and (c) without enclose_metadata
+# This example showcases publishing Metrics using (c) without enclose_metadata.
 # ------------------------------------------------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -137,14 +137,12 @@ if __name__ == '__main__':
     #  Initializing GenericMqtt using MqttDccComms
     #  Custom Publish Topic for an EdgeSystem
     #  Azure MQTT support documentation link: https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-mqtt-support
-    mqtt_msg_attr = MqttMessagingAttributes(pub_topic=config['EdgeSystemHealthPubTopic'])
-
     azure = GenericMqtt(MqttDccComms(edge_system.name, config['BrokerURL'], config['BrokerPort'],
                                      credentials=credentials, tls_conf=tls_conf, qos_details=qos_details,
                                      client_id=config["device_id"], clean_session=False, userdata=config['userdata'],
                                      protocol=config['protocol'], transport=['transport'],
                                      conn_disconn_timeout=config['ConnectDisconnectTimeout'],
-                                     mqtt_msg_attr=mqtt_msg_attr, enable_authentication=True), enclose_metadata=True)
+                                     mqtt_msg_attr=None, enable_authentication=True), enclose_metadata=False)
 
     #  Registering EdgeSystem
     reg_edge_system = azure.register(edge_system)
@@ -160,6 +158,9 @@ if __name__ == '__main__':
     #  Registering Metric and creating Parent-Child relationship
     reg_cpu_utilization = azure.register(cpu_utilization)
     azure.create_relationship(reg_edge_system, reg_cpu_utilization)
+
+    reg_cpu_utilization.msg_attr = MqttMessagingAttributes(pub_topic=config['EdgeSystemHealthPubTopic'])
+
     #  Publishing Registered CPU Utilization Metric to Azure
     #  Publish topic for this metric is config['CustomPubTopic']
     reg_cpu_utilization.start_collecting()
