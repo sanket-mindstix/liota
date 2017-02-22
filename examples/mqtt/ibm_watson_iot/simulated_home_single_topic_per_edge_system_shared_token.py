@@ -169,7 +169,6 @@ if __name__ == '__main__':
     ibm.create_relationship(reg_edge_system, reg_cpu_utilization)
 
     #  Publishing Registered CPU Utilization Metric to IBM Watson
-    #  Publish topic for this metric is config['CustomPubTopic']
     reg_cpu_utilization.start_collecting()
 
     #  Creating Simulated Device

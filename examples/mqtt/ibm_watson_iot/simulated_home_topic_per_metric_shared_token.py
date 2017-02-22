@@ -170,7 +170,6 @@ if __name__ == '__main__':
     reg_cpu_utilization.msg_attr = MqttMessagingAttributes(pub_topic=config['EdgeSystemHealthPubTopic'])
 
     #  Publishing Registered CPU Utilization Metric to IBM Watson IoT Platform
-    #  Publish topic for this metric is config['CustomPubTopic']
     reg_cpu_utilization.start_collecting()
 
     #  Creating Simulated Device
