@@ -47,7 +47,7 @@ from liota.lib.utilities.utility import getUTCmillis
 
 # AWS configurations
 config = {}
-execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/awsIoTProp.conf', config)
+execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/testAWSIoTProp.conf', config)
 connect_rc = 0
 disconnect_rc = 0
 

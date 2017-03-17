@@ -44,7 +44,7 @@ from liota.lib.utilities.tls_conf import TLSConf
 
 # MQTT configurations
 config = {}
-execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/mqttTransportsProp.conf', config)
+execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/testMqttTransportsProp.conf', config)
 connect_rc = 0
 disconnect_rc = 0
 
