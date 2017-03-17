@@ -48,7 +48,7 @@ from liota.lib.utilities.utility import getUTCmillis
 
 # AWS configurations
 config = {}
-execfile(os.path.dirname(os.path.abspath(__file__)) + '/awsIoTProp.conf', config)
+execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/awsIoTProp.conf', config)
 connect_rc = 0
 disconnect_rc = 0
 
@@ -68,12 +68,12 @@ def sampling_function():
 
 class MQTTTest(unittest.TestCase):
     """
-    AWS IoT unit test cases
+    AWSIoT unit test cases
     """
 
     def setUp(self):
         """
-        Method to initialise the MQTT parameters.
+        Method to initialise the AWSIoT parameters.
         :return: None
         """
 

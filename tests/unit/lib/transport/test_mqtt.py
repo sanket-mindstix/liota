@@ -44,13 +44,13 @@ from liota.lib.utilities.tls_conf import TLSConf
 
 # MQTT configurations
 config = {}
-execfile(os.path.dirname(os.path.abspath(__file__)) + '/mqttTransportsProp.conf', config)
+execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/mqttTransportsProp.conf', config)
 connect_rc = 0
 disconnect_rc = 0
 
 
 # Monkey patched connect method of Paho client
-def mocked_connect(self, host, port=1883, keepalive=60, bind_address=""):
+def mocked_connect(self, *args, **kwargs):
     # Call on_connect method with connection established options connect_rc
     self.on_connect(self._client_id, self._userdata, None, connect_rc)
 
@@ -76,7 +76,7 @@ def mocked_loop_stop(self, *args, **kwargs):
 
 
 # Method to test the on message callback of the topic.
-def topic_subscribe_callback(self, client, userdata, msg):
+def topic_subscribe_callback(self, *args, **kwargs):
     pass
 
 
@@ -763,7 +763,7 @@ class MQTTTest(unittest.TestCase):
     @mock.patch.object(Mqtt, 'connect_soc')
     def test_mqtt_callback_methods(self, mock_connect):
         """
-        Method to test the implementation of on_message method of the Mqtt class
+        Method to test the implementation of all callback methods of the Mqtt class
         :return: None
         """
 
