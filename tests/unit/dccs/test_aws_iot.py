@@ -45,7 +45,6 @@ from liota.entities.registered_entity import RegisteredEntity
 from liota.entities.metrics.registered_metric import RegisteredMetric
 from liota.lib.utilities.utility import getUTCmillis
 
-
 # AWS configurations
 config = {}
 execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/awsIoTProp.conf', config)
