@@ -31,7 +31,6 @@
 # ----------------------------------------------------------------------------#
 
 import unittest
-import os
 import json
 import pint
 
@@ -44,12 +43,6 @@ from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.entities.registered_entity import RegisteredEntity
 from liota.entities.metrics.registered_metric import RegisteredMetric
 from liota.lib.utilities.utility import getUTCmillis
-
-# AWS configurations
-config = {}
-execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/testAWSIoTProp.conf', config)
-connect_rc = 0
-disconnect_rc = 0
 
 # Create a pint unit registry
 ureg = pint.UnitRegistry()
@@ -77,7 +70,23 @@ class MQTTTest(unittest.TestCase):
         """
 
         # EdgeSystem name
-        self.edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+        self.edge_system = Dell5KEdgeSystem("TestEdgeSystem")
+
+        # Monkey patch the constructor of MqttDccComms
+        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
+
+        self.mocked_mqtt_dcc_comms = MqttDccComms()
+
+        self.aws = AWSIoT(self.mocked_mqtt_dcc_comms, enclose_metadata=True)
+
+    def tearDown(self):
+        """
+        Method to cleanup the resource created during the execution of test case.
+        :return: None
+        """
+        self.edge_system = None
+        self.mocked_mqtt_dcc_comms = None
+        self.aws = None
 
     def dict_equal(self, d1, d2, msg="Invalid dict, please check the implementation"):
         """
@@ -124,22 +133,16 @@ class MQTTTest(unittest.TestCase):
         Method to test the implementation of AWSIoT class.
         :return: None
         """
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
 
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
-        self.assertIsInstance(aws, AWSIoT, "Check the implementation of AWSIoT class")
+        self.assertIsInstance(self.aws, AWSIoT, "Check the implementation of AWSIoT class")
 
     def test_validation_of_comms_parameter(self):
         """
         Method to test the validation of AWSIoT class for invalid connections object.
         :return: None
         """
-        # Checking whether implementation raising the TypeError Exception invalid comms object
-        with self.assertRaises(Exception):
+        # Checking whether implementation raising the TypeError Exception for invalid comms object
+        with self.assertRaises(TypeError):
             AWSIoT("Invalid object", enclose_metadata=True)
 
     def test_implementation_register_entity(self):
@@ -148,16 +151,8 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         # Check the returned object is of the class RegisteredEntity
         self.assertIsInstance(registered_entity, RegisteredEntity)
@@ -168,14 +163,6 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Creating test Metric
         test_metric = Metric(
             name="Test_Metric",
@@ -185,7 +172,7 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Check the returned object is of the class RegisteredMetric
         self.assertIsInstance(registered_metric, RegisteredMetric)
@@ -196,16 +183,8 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -216,10 +195,10 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Creating the parent-child relationship
-        aws.create_relationship(registered_entity, registered_metric)
+        self.aws.create_relationship(registered_entity, registered_metric)
 
         self.assertEqual(registered_metric.parent, registered_entity, "Check the implementation of create_relationship")
 
@@ -229,16 +208,8 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -249,43 +220,11 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         with self.assertRaises(TypeError):
-            # Creating the parent-child relationship between Metric and Edge-System
-            aws.create_relationship(registered_metric, registered_entity)
-
-    def test_validation_create_relationship_parent_entity(self):
-        """
-        Method to test the implementation of create_relationship method of class AWSIoT.
-        :return: None
-        """
-
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
-        # Register the edge
-        registered_entity = aws.register(self.edge_system)
-
-        #  Creating test Metric
-        test_metric = Metric(
-            name="Test_Metric",
-            unit=None,
-            interval=10,
-            aggregation_size=2,
-            sampling_function=sampling_function
-        )
-
-        registered_metric = aws.register(test_metric)
-
-        with self.assertRaises(TypeError):
-            # Creating the parent-child relationship between Metric and Edge-System
-            aws.create_relationship(registered_metric, registered_entity)
+            # Test case to check RegisteredEntity as both Parent and Child
+            self.aws.create_relationship(registered_metric, registered_entity)
 
     def test_validation_create_relationship_child_entity(self):
         """
@@ -293,37 +232,21 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         with self.assertRaises(TypeError):
             # Creating the parent-child relationship between Edge-System and Edge-System
-            aws.create_relationship(registered_entity, registered_entity)
+            self.aws.create_relationship(registered_entity, registered_entity)
 
     def test_implementation_get_entity_hierarchy(self):
         """
-        Method to test the implementation of create_relationship method of class AWSIoT.
+        Method to check get_entity_entity_hierarchy() for RegisteredEdgeSystem->RegisteredMetric
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -334,30 +257,62 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Creating the parent-child relationship
-        aws.create_relationship(registered_entity, registered_metric)
+        self.aws.create_relationship(registered_entity, registered_metric)
 
         # Getting the parent child relationship array from registered metric
-        entity_hierarchy = aws._get_entity_hierarchy(registered_metric)
+        entity_hierarchy = self.aws._get_entity_hierarchy(registered_metric)
 
         self.assertSequenceEqual([registered_entity.ref_entity.name, registered_metric.ref_entity.name],
-                                 entity_hierarchy, "Check the implementation of _get_entity_hierarchy")
+                                 entity_hierarchy, "Check the implementation of _get_entity_hierarchy for "
+                                                   "RegisteredEdgeSystem->RegisteredMetric")
+
+    def test_implementation_get_entity_hierarchy_device_metric(self):
+        """
+        Method to check get_entity_entity_hierarchy() for RegisteredEdgeSystem->RegisteredDevice->RegisteredMetric
+        :return: None
+        """
+
+        # Register the edge
+        registered_entity = self.aws.register(self.edge_system)
+
+        #  Creating Simulated Device
+        test_sensor = SimulatedDevice("TestSensor")
+
+        #  Registering Device and creating Parent-Child relationship
+        reg_test_sensor = self.aws.register(test_sensor)
+
+        self.aws.create_relationship(registered_entity, reg_test_sensor)
+
+        #  Creating test Metric
+        test_metric = Metric(
+            name="Test_Metric",
+            unit=ureg.degC,
+            interval=10,
+            aggregation_size=2,
+            sampling_function=sampling_function
+        )
+
+        registered_metric = self.aws.register(test_metric)
+
+        # Creating the parent-child relationship
+        self.aws.create_relationship(reg_test_sensor, registered_metric)
+
+        # Getting the parent child relationship array from registered metric
+        entity_hierarchy = self.aws._get_entity_hierarchy(registered_metric)
+
+        self.assertSequenceEqual([registered_entity.ref_entity.name, reg_test_sensor.ref_entity.name,
+                                  registered_metric.ref_entity.name],
+                                 entity_hierarchy, "Check the implementation of _get_entity_hierarchy for "
+                                                   "RegisteredEdgeSystem->RegisteredDevice->RegisteredMetric")
 
     def test_validation_get_entity_hierarchy(self):
         """
         Method to test the validation of _get_entity_hierarchy method of class AWSIoT.
         :return: None
         """
-
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
 
         # Creating test Metric
         test_metric = Metric(
@@ -370,7 +325,7 @@ class MQTTTest(unittest.TestCase):
 
         # Checking whether implementation raising the TypeError for invalid input
         with self.assertRaises(TypeError):
-            aws._get_entity_hierarchy(test_metric)
+            self.aws._get_entity_hierarchy(test_metric)
 
     def test_implementation_format_data_no_data(self):
         """
@@ -378,16 +333,10 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=False)
+        self.aws = AWSIoT(self.mocked_mqtt_dcc_comms, enclose_metadata=False)
 
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -398,13 +347,13 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Creating the parent-child relationship
-        aws.create_relationship(registered_entity, registered_metric)
+        self.aws.create_relationship(registered_entity, registered_metric)
 
         # Getting the parent child relationship array from registered metric
-        formatted_data = aws._format_data(registered_metric)
+        formatted_data = self.aws._format_data(registered_metric)
 
         # Check two dicts are equal or not
         self.assertEqual(None, formatted_data, "Check implementation of _format_data")
@@ -415,16 +364,8 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -435,10 +376,10 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Creating the parent-child relationship
-        aws.create_relationship(registered_entity, registered_metric)
+        self.aws.create_relationship(registered_entity, registered_metric)
 
         timestamp = getUTCmillis()
 
@@ -455,7 +396,7 @@ class MQTTTest(unittest.TestCase):
         }
 
         # Getting the parent child relationship array from registered metric
-        formatted_data = aws._format_data(registered_metric)
+        formatted_data = self.aws._format_data(registered_metric)
 
         formatted_json_data = json.loads(formatted_data)
 
@@ -470,16 +411,10 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=False)
+        self.aws = AWSIoT(self.mocked_mqtt_dcc_comms, enclose_metadata=False)
 
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -490,10 +425,10 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Creating the parent-child relationship
-        aws.create_relationship(registered_entity, registered_metric)
+        self.aws.create_relationship(registered_entity, registered_metric)
 
         # Get current timestamp
         timestamp = getUTCmillis()
@@ -511,7 +446,7 @@ class MQTTTest(unittest.TestCase):
         }
 
         # Getting the parent child relationship array from registered metric
-        formatted_data = aws._format_data(registered_metric)
+        formatted_data = self.aws._format_data(registered_metric)
 
         # Convert json string to dict for the comparision
         formatted_json_data = json.loads(formatted_data)
@@ -526,24 +461,16 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        # Creating the mocked MqttDccComms object
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Register the edge
-        registered_entity = aws.register(self.edge_system)
+        registered_entity = self.aws.register(self.edge_system)
 
         #  Creating Simulated Device
         test_sensor = SimulatedDevice("TestSensor")
 
         #  Registering Device and creating Parent-Child relationship
-        reg_test_sensor = aws.register(test_sensor)
+        reg_test_sensor = self.aws.register(test_sensor)
 
-        aws.create_relationship(registered_entity, reg_test_sensor)
+        self.aws.create_relationship(registered_entity, reg_test_sensor)
 
         #  Creating test Metric
         test_metric = Metric(
@@ -554,10 +481,10 @@ class MQTTTest(unittest.TestCase):
             sampling_function=sampling_function
         )
 
-        registered_metric = aws.register(test_metric)
+        registered_metric = self.aws.register(test_metric)
 
         # Creating the parent-child relationship
-        aws.create_relationship(reg_test_sensor, registered_metric)
+        self.aws.create_relationship(reg_test_sensor, registered_metric)
 
         # Get current timestamp
         timestamp = getUTCmillis()
@@ -586,7 +513,7 @@ class MQTTTest(unittest.TestCase):
             expected_output['unit'] = unit_tuple[0] + unit_tuple[1]
 
         # Getting the parent child relationship array from registered metric
-        formatted_data = aws._format_data(registered_metric)
+        formatted_data = self.aws._format_data(registered_metric)
 
         # Convert json string to dict for the comparision
         formatted_json_data = json.loads(formatted_data)
@@ -600,15 +527,8 @@ class MQTTTest(unittest.TestCase):
         Method to test the implementation of set_properties method of AWSIoT class.
         :return: None
         """
-        # Monkey patch the constructor of MqttDccComms
-        MqttDccComms.__init__ = mocked_init_mqtt_dcc_comms
-
-        mocked_mqtt_dcc_comms = MqttDccComms()
-
-        aws = AWSIoT(mocked_mqtt_dcc_comms, enclose_metadata=True)
-
         # Check method raising the NotImplementedError exception.
-        self.assertRaises(NotImplementedError, aws.set_properties, None, None)
+        self.assertRaises(NotImplementedError, self.aws.set_properties, None, None)
 
 
 if __name__ == '__main__':
