@@ -43,6 +43,7 @@ from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.entities.registered_entity import RegisteredEntity
 from liota.entities.metrics.registered_metric import RegisteredMetric
 from liota.lib.utilities.utility import getUTCmillis
+from liota.lib.utilities.utility import ordered_list
 
 # Create a pint unit registry
 ureg = pint.UnitRegistry()
@@ -87,46 +88,6 @@ class MQTTTest(unittest.TestCase):
         self.edge_system = None
         self.mocked_mqtt_dcc_comms = None
         self.aws = None
-
-    def dict_equal(self, d1, d2, msg="Invalid dict, please check the implementation"):
-        """
-        Method to compare two dictionaries.
-        :param d1: Dictionary one
-        :param d2: Dictionary two
-        :return: True or False
-        """
-        # Check metric_data key present in both the dict
-        self.assertIn("metric_data", d1)
-        self.assertIn("metric_data", d2)
-
-        for i in range(len(d1["metric_data"])):
-            dict_matched = False
-            for j in range(len(d2["metric_data"])):
-                cmp_status = cmp(d1["metric_data"][i], d2["metric_data"][j])
-
-                if cmp_status == 0:
-                    dict_matched = True
-                    del d2["metric_data"][j]
-                    break
-
-            if not dict_matched:
-                return False
-
-        # Pop metric_data key from dict
-        d1.pop("metric_data", None)
-        d2.pop("metric_data", None)
-
-        for k, v1 in d1.iteritems():
-            # Check if key present in the second dict
-            self.assertIn(k, d2, msg)
-
-            # Get value of key from second dict
-            v2 = d2[k]
-
-            # Compare the value
-            self.assertEqual(v1, v2, msg)
-
-        return True
 
     def test_aws_class_implementation(self):
         """
@@ -179,7 +140,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_create_relationship(self):
         """
-        Method to test the implementation of create_relationship method of class AWSIoT.
+        Method to test RegisteredEntity and Parent and RegisteredMetric as child.
         :return: None
         """
 
@@ -204,7 +165,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_validation_create_relationship_metric_device(self):
         """
-        Method to test the implementation of create_relationship method of class AWSIoT.
+        Method to test RegisteredMetric as Parent and RegisteredEntity as child.
         :return: None
         """
 
@@ -401,7 +362,7 @@ class MQTTTest(unittest.TestCase):
         formatted_json_data = json.loads(formatted_data)
 
         # Check two dicts are equal or not
-        self.assertEqual(self.dict_equal(formatted_json_data, expected_output), True,
+        self.assertEqual(ordered_list(formatted_json_data) == ordered_list(expected_output), True,
                          "Check implementation of _format_data")
 
     def test_implementation_format_data_without_enclose_metatadata(self):
@@ -452,7 +413,7 @@ class MQTTTest(unittest.TestCase):
         formatted_json_data = json.loads(formatted_data)
 
         # Check two dicts are equal or not
-        self.assertEqual(self.dict_equal(formatted_json_data, expected_output), True,
+        self.assertEqual(ordered_list(formatted_json_data) == ordered_list(expected_output), True,
                          "Check implementation of _format_data")
 
     def test_implementation_format_data_without_enclose_metadata_device(self):
@@ -519,7 +480,7 @@ class MQTTTest(unittest.TestCase):
         formatted_json_data = json.loads(formatted_data)
 
         # Check two dicts are equal or not
-        self.assertEqual(self.dict_equal(formatted_json_data, expected_output), True,
+        self.assertEqual(ordered_list(formatted_json_data) == ordered_list(expected_output), True,
                          "Check implementation of _format_data")
 
     def test_set_properties(self):

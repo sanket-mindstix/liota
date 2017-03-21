@@ -113,6 +113,7 @@ def get_linux_version():
 def getUTCmillis():
     return long(1000 * ((datetime.utcnow() - datetime(1970, 1, 1)).total_seconds()))
 
+
 def mkdir_log(path):
     if not os.path.exists(path):
         try:
@@ -122,6 +123,21 @@ def mkdir_log(path):
                 pass
             else:
                 raise
+
+
+def ordered_list(obj):
+    """
+    Method to sort the provided json and returns bank the sorted list representation of the json.
+    :param obj: json object
+    :return: sorted list of json
+    """
+    if isinstance(obj, dict):
+        return sorted((k, ordered_list(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered_list(x) for x in obj)
+    else:
+        return obj
+
 
 class LiotaConfigPath:
     path_liota_config = ''
