@@ -125,20 +125,6 @@ def mkdir_log(path):
                 raise
 
 
-def ordered_list(obj):
-    """
-    Method to sort the provided json and returns bank the sorted list representation of the json.
-    :param obj: json object
-    :return: sorted list of json
-    """
-    if isinstance(obj, dict):
-        return sorted((k, ordered_list(v)) for k, v in obj.items())
-    if isinstance(obj, list):
-        return sorted(ordered_list(x) for x in obj)
-    else:
-        return obj
-
-
 class LiotaConfigPath:
     path_liota_config = ''
     syswide_path = '/etc/liota/conf/'

@@ -43,13 +43,12 @@ from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.entities.registered_entity import RegisteredEntity
 from liota.entities.metrics.registered_metric import RegisteredMetric
 from liota.lib.utilities.utility import getUTCmillis
-from liota.lib.utilities.utility import ordered_list
 
 # Create a pint unit registry
 ureg = pint.UnitRegistry()
 
 
-# Monkey patched init method of
+# Monkey patched init method of MqttDccComms
 def mocked_init_mqtt_dcc_comms(self, *args, **kwargs):
     pass
 
@@ -59,7 +58,21 @@ def sampling_function():
     pass
 
 
-class MQTTTest(unittest.TestCase):
+def validate_json(obj):
+    """
+    Method to sort the provided json and returns back the sorted list representation of the json.
+    :param obj: json object
+    :return: sorted list of json
+    """
+    if isinstance(obj, dict):
+        return sorted((k, validate_json(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(validate_json(x) for x in obj)
+    else:
+        return obj
+
+
+class AWSIoTTest(unittest.TestCase):
     """
     AWSIoT unit test cases
     """
@@ -91,7 +104,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_aws_class_implementation(self):
         """
-        Method to test the implementation of AWSIoT class.
+        Test case to check the implementation of AWSIoT class.
         :return: None
         """
 
@@ -99,7 +112,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_validation_of_comms_parameter(self):
         """
-        Method to test the validation of AWSIoT class for invalid connections object.
+        Test case to check the validation of AWSIoT class for invalid connections object.
         :return: None
         """
         # Checking whether implementation raising the TypeError Exception for invalid comms object
@@ -108,7 +121,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_register_entity(self):
         """
-        Method to test the implementation of register method of AWSIoT for entity type.
+        Test case to check the implementation of register method of AWSIoT class for entity registration.
         :return: None
         """
 
@@ -120,7 +133,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_register_metric(self):
         """
-        Method to test the implementation of register method of AWSIoT for entity type.
+        Test case to check the implementation of register method of AWSIoT for metric registration.
         :return: None
         """
 
@@ -140,7 +153,8 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_create_relationship(self):
         """
-        Method to test RegisteredEntity and Parent and RegisteredMetric as child.
+        Test case to test RegisteredEntity as Parent and RegisteredMetric as child.
+        RegisteredEdgeSystem->RegisteredMetric
         :return: None
         """
 
@@ -165,7 +179,8 @@ class MQTTTest(unittest.TestCase):
 
     def test_validation_create_relationship_metric_device(self):
         """
-        Method to test RegisteredMetric as Parent and RegisteredEntity as child.
+        Test case to test validation for RegisteredMetric as Parent and RegisteredEntity as child.
+        RegisteredMetric->RegisteredMetric->
         :return: None
         """
 
@@ -184,12 +199,13 @@ class MQTTTest(unittest.TestCase):
         registered_metric = self.aws.register(test_metric)
 
         with self.assertRaises(TypeError):
-            # Test case to check RegisteredEntity as both Parent and Child
+            # Test case to check validation for RegisteredMetric as Parent and RegisteredEntity as child.
             self.aws.create_relationship(registered_metric, registered_entity)
 
     def test_validation_create_relationship_child_entity(self):
         """
-        Method to test the validation of create_relationship method of class AWSIoT.
+        Test case to check validation for RegisteredEntity as Parent and Child.
+        RegisteredEdgeSystem->RegisteredEdgeSystem.
         :return: None
         """
 
@@ -202,7 +218,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_get_entity_hierarchy(self):
         """
-        Method to check get_entity_entity_hierarchy() for RegisteredEdgeSystem->RegisteredMetric
+        Test case to check get_entity_entity_hierarchy() for RegisteredEdgeSystem->RegisteredMetric
         :return: None
         """
 
@@ -232,7 +248,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_get_entity_hierarchy_device_metric(self):
         """
-        Method to check get_entity_entity_hierarchy() for RegisteredEdgeSystem->RegisteredDevice->RegisteredMetric
+        Test case to check get_entity_entity_hierarchy() for RegisteredEdgeSystem->RegisteredDevice->RegisteredMetric
         :return: None
         """
 
@@ -271,7 +287,8 @@ class MQTTTest(unittest.TestCase):
 
     def test_validation_get_entity_hierarchy(self):
         """
-        Method to test the validation of _get_entity_hierarchy method of class AWSIoT.
+        Test case to test the validation of _get_entity_hierarchy method of class AWSIoT.
+        Metric->Metric
         :return: None
         """
 
@@ -290,7 +307,7 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_format_data_no_data(self):
         """
-        Method to test the implementation of _format_data for empty metric data.
+        Test case to check the implementation of _format_data for empty metric data.
         :return: None
         """
 
@@ -321,7 +338,8 @@ class MQTTTest(unittest.TestCase):
 
     def test_implementation_format_data_with_enclose_metadata(self):
         """
-        Method to test the implementation of _format_data method of class AWSIoT.
+        Test case to check the implementation of _format_data method with enclose_metadata option of AWSIoT class.
+        RegisteredEdgeSystem->RegisteredMetric
         :return: None
         """
 
@@ -362,13 +380,13 @@ class MQTTTest(unittest.TestCase):
         formatted_json_data = json.loads(formatted_data)
 
         # Check two dicts are equal or not
-        self.assertEqual(ordered_list(formatted_json_data) == ordered_list(expected_output), True,
+        self.assertEqual(validate_json(formatted_json_data) == validate_json(expected_output), True,
                          "Check implementation of _format_data")
 
     def test_implementation_format_data_without_enclose_metatadata(self):
         """
-        Method to test the implementation of create_relationship method without enclosed meta_data option
-        of class AWSIoT.
+        Test case to check the output given by _format_data method without enclosed meta_data option.
+        RegisteredEdgeSystem->RegisteredMetric
         :return: None
         """
 
@@ -413,12 +431,13 @@ class MQTTTest(unittest.TestCase):
         formatted_json_data = json.loads(formatted_data)
 
         # Check two dicts are equal or not
-        self.assertEqual(ordered_list(formatted_json_data) == ordered_list(expected_output), True,
+        self.assertEqual(validate_json(formatted_json_data) == validate_json(expected_output), True,
                          "Check implementation of _format_data")
 
-    def test_implementation_format_data_without_enclose_metadata_device(self):
+    def test_implementation_format_data_with_enclose_metadata_device(self):
         """
-        Method to test the implementation of _format_data method of class AWSIoT.
+        Test case to test the implementation of _format_data method with enclose_metadata option.
+        RegisteredEdgeSystem->RegisteredDevice->RegisteredMetric
         :return: None
         """
 
@@ -480,12 +499,12 @@ class MQTTTest(unittest.TestCase):
         formatted_json_data = json.loads(formatted_data)
 
         # Check two dicts are equal or not
-        self.assertEqual(ordered_list(formatted_json_data) == ordered_list(expected_output), True,
+        self.assertEqual(validate_json(formatted_json_data) == validate_json(expected_output), True,
                          "Check implementation of _format_data")
 
     def test_set_properties(self):
         """
-        Method to test the implementation of set_properties method of AWSIoT class.
+        Test case to test the implementation of set_properties method of AWSIoT class.
         :return: None
         """
         # Check method raising the NotImplementedError exception.
