@@ -31,7 +31,6 @@
 # ----------------------------------------------------------------------------#
 
 import unittest
-import os
 import sys
 import mock
 
@@ -44,7 +43,6 @@ from liota.lib.utilities.tls_conf import TLSConf
 
 # MQTT configurations
 config = {}
-execfile(os.path.dirname(os.path.abspath(__file__)) + '/conf/testMqttTransportsProp.conf', config)
 connect_rc = 0
 disconnect_rc = 0
 
@@ -92,36 +90,36 @@ class MQTTTest(unittest.TestCase):
         """
 
         # Broker details
-        self.url = config["BrokerIP"]
-        self.port = config["BrokerPort"]
-        self.mqtt_username = config["mqtt_username"]
-        self.mqtt_password = config["mqtt_password"]
-        self.enable_authentication = config["enable_authentication"]
+        self.url = "127.0.0.1"
+        self.port = 8883
+        self.mqtt_username = "test"
+        self.mqtt_password = "test"
+        self.enable_authentication = True
         self.client_clean_session = True
-        self.protocol = config["protocol"]
-        self.transport = config["transport"]
-        self.connection_disconnect_timeout = config["connection_disconnect_timeout"]
-        self.user_data = config["user_data"]
-        self.clean_session_flag = config["clean_session_flag"]
-        self.client_id = config["client_id"]
+        self.protocol = "MQTTv311"
+        self.transport = "tcp"
+        self.connection_disconnect_timeout = 2
+        self.user_data = None
+        self.client_id = "test-client"
+        config["client_id"] = self.client_id
 
         # Message QoS and connection details
-        self.QoSlevel = config["QoSlevel"]
-        self.inflight = config["inflight"]
-        self.queue_size = config["queue_size"]
-        self.retry = config["retry"]
-        self.keep_alive = config["keep_alive"]
+        self.QoSlevel = 2
+        self.inflight = 20
+        self.queue_size = 0
+        self.retry = 5
+        self.keep_alive = 60
 
         # EdgeSystem name
-        self.edge_system = Dell5KEdgeSystem(config['EdgeSystemName'])
+        self.edge_system = Dell5KEdgeSystem("TestEdgeSystem")
 
         # TLS configurations
-        self.root_ca_cert = config["root_ca_cert"]
-        self.client_cert_file = config["client_cert_file"]
-        self.client_key_file = config["client_key_file"]
-        self.cert_required = config["cert_required"]
-        self.tls_version = config["tls_version"]
-        self.cipher = config["cipher"]
+        self.root_ca_cert = "/etc/liota/mqtt/conf/ca.crt"
+        self.client_cert_file = "/etc/liota/mqtt/conf/client.crt"
+        self.client_key_file = "/etc/liota/mqtt/conf/client.key"
+        self.cert_required = "CERT_REQUIRED"
+        self.tls_version = "PROTOCOL_TLSv1"
+        self.cipher = None
 
     def tearDown(self):
         """
@@ -139,8 +137,8 @@ class MQTTTest(unittest.TestCase):
         self.transport = None
         self.connection_disconnect_timeout = None
         self.user_data = None
-        self.clean_session_flag = None
         self.client_id = None
+        config["client_id"] = None
 
         # Message QoS and connection details
         self.QoSlevel = None
@@ -176,10 +174,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
@@ -206,10 +204,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
@@ -229,10 +227,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid root ca_certs
         with self.assertRaises(ValueError):
@@ -252,10 +250,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid root ca_certs
         with self.assertRaises(ValueError):
@@ -276,10 +274,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid client ca_certs
         with self.assertRaises(ValueError):
@@ -299,10 +297,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid client ca_certs
         with self.assertRaises(ValueError):
@@ -323,10 +321,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid client key
         with self.assertRaises(ValueError):
@@ -347,10 +345,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid client cert
         with self.assertRaises(ValueError):
@@ -369,10 +367,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for invalid username
         with self.assertRaises(ValueError):
@@ -391,10 +389,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the ValueError for empty password
         with self.assertRaises(ValueError):
@@ -421,10 +419,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
@@ -453,10 +451,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the Exception for broker timeout
         with self.assertRaises(Exception):
@@ -484,10 +482,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the Exception for broker connection refused
         with self.assertRaises(Exception):
@@ -513,10 +511,10 @@ class MQTTTest(unittest.TestCase):
         credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password, None, None)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
@@ -540,10 +538,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
@@ -577,10 +575,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
@@ -611,10 +609,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the Exception for broker disconnect timeout
         with self.assertRaises(Exception):
@@ -647,10 +645,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         # Checking whether implementation raising the Exception for broker disconnect
         with self.assertRaises(Exception):
@@ -679,10 +677,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
@@ -710,10 +708,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
@@ -728,7 +726,7 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        self.assertIsInstance(QoSDetails(config['inflight'], config['queue_size'], config['retry']), QoSDetails,
+        self.assertIsInstance(QoSDetails(self.inflight, self.queue_size, self.retry), QoSDetails,
                               "Invalid implementation for QoSDetails class")
 
     def test_mqtt_messaging_attributes_implementation_for_gateway_name(self):
@@ -792,10 +790,10 @@ class MQTTTest(unittest.TestCase):
                                self.client_cert_file, self.client_key_file)
 
         # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, config['tls_version'], config['cipher'])
+        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
 
         # Encapsulate QoS related parameters
-        qos_details = QoSDetails(config['inflight'], config['queue_size'], config['retry'])
+        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
         mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
