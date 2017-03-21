@@ -180,7 +180,7 @@ class AWSIoTTest(unittest.TestCase):
     def test_validation_create_relationship_metric_device(self):
         """
         Test case to test validation for RegisteredMetric as Parent and RegisteredEntity as child.
-        RegisteredMetric->RegisteredMetric->
+        RegisteredMetric->RegisteredMetric
         :return: None
         """
 
@@ -287,8 +287,8 @@ class AWSIoTTest(unittest.TestCase):
 
     def test_validation_get_entity_hierarchy(self):
         """
-        Test case to test the validation of _get_entity_hierarchy method of class AWSIoT.
-        Metric->Metric
+        Test case to check the validation of _get_entity_hierarchy method for RegisteredMetric object.
+        Passing Metric object to the _get_entity_hierarchy method.
         :return: None
         """
 
