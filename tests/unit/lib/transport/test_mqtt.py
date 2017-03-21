@@ -119,6 +119,42 @@ class MQTTTest(unittest.TestCase):
         self.tls_version = config["tls_version"]
         self.cipher = config["cipher"]
 
+    def tearDown(self):
+        """
+        Method to cleanup the resource created during the execution of test case.
+        :return: None
+        """
+        # Broker details
+        self.url = None
+        self.port = None
+        self.mqtt_username = None
+        self.mqtt_password = None
+        self.enable_authentication = None
+        self.client_clean_session = None
+        self.protocol = None
+        self.transport = None
+        self.connection_disconnect_timeout = None
+        self.user_data = None
+        self.clean_session_flag = None
+
+        # Message QoS and connection details
+        self.QoSlevel = None
+        self.inflight = None
+        self.queue_size = None
+        self.retry = None
+        self.keep_alive = None
+
+        # EdgeSystem name
+        self.edge_system = None
+
+        # TLS configurations
+        self.root_ca_cert = None
+        self.client_cert_file = None
+        self.client_key_file = None
+        self.cert_required = None
+        self.tls_version = None
+        self.cipher = None
+
     @mock.patch.object(Mqtt, 'connect_soc')
     def test_mqtt_init(self, mock_connect):
         """
