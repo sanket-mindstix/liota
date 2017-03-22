@@ -658,20 +658,13 @@ class MQTTTest(unittest.TestCase):
 
             mqtt_client.disconnect()
 
-    def test_publish(self):
+    @mock.patch.object(Mqtt, 'connect_soc')
+    @mock.patch.object(Client, 'publish')
+    def test_publish(self, mocked_publish, connect_soc):
         """
         Test case to test publish method of Mqtt class.
         :return: None
         """
-        global connect_rc, disconnect_rc
-
-        # Setting connection accepted flag
-        connect_rc = 0
-
-        # Mocked the connect and loop_start method of Paho library
-        Client.connect = mocked_connect
-        Client.loop_start = mocked_loop_start
-
         # Encapsulate the authentication details
         credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
                                self.client_cert_file, self.client_key_file)
@@ -686,22 +679,20 @@ class MQTTTest(unittest.TestCase):
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
                            self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
-        # Check publish is executes successfully and returns None
-        self.assertEqual(mqtt_client.publish("test/publish", "Testing publish", 1), None)
+        # Publishing the message
+        mqtt_client.publish("test/publish", "Testing publish", 1, False)
 
-    def test_subscribe(self):
+        # Check underline publish is called with correct arguments
+        mocked_publish.assert_called_with("test/publish", "Testing publish", 1, False)
+
+    @mock.patch.object(Mqtt, 'connect_soc')
+    @mock.patch.object(Client, 'subscribe')
+    @mock.patch.object(Client, "message_callback_add")
+    def test_subscribe(self, mocked_callback_add, mocked_subscribe, connect_soc):
         """
         Test case to test the subscribe method.
         :return: None
         """
-        global connect_rc, disconnect_rc
-
-        # Setting connection accepted flag
-        connect_rc = 0
-
-        # Monkey patched the connect and loop_start methods of Paho library
-        Client.connect = mocked_connect
-        Client.loop_start = mocked_loop_start
 
         # Encapsulate the authentication details
         credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
@@ -717,8 +708,14 @@ class MQTTTest(unittest.TestCase):
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
                            self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
-        # Check subscribe is executing successfully and returning None
-        self.assertEqual(mqtt_client.subscribe("test/subscribe", 1, topic_subscribe_callback), None)
+        # Subscribing to the topic
+        mqtt_client.subscribe("test/subscribe", 1, topic_subscribe_callback)
+
+        # Check underline subscribe is called with correct parameters
+        mocked_subscribe.assert_called_with("test/subscribe", 1)
+
+        # Check underline message_callback_add is called with correct parameters
+        mocked_callback_add.assert_called_with("test/subscribe", topic_subscribe_callback)
 
     def test_QoS_class_implementation(self):
         """
