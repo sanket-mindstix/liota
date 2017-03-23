@@ -102,14 +102,6 @@ class AWSIoTTest(unittest.TestCase):
         self.mocked_mqtt_dcc_comms = None
         self.aws = None
 
-    def test_aws_class_implementation(self):
-        """
-        Test case to check the implementation of AWSIoT class.
-        :return: None
-        """
-
-        self.assertIsInstance(self.aws, AWSIoT, "Check the implementation of AWSIoT class")
-
     def test_validation_of_comms_parameter(self):
         """
         Test case to check the validation of AWSIoT class for invalid connections object.
@@ -287,8 +279,7 @@ class AWSIoTTest(unittest.TestCase):
 
     def test_validation_get_entity_hierarchy(self):
         """
-        Test case to check the validation of _get_entity_hierarchy method for RegisteredMetric object.
-        Passing Metric object to the _get_entity_hierarchy method.
+        Test case to check the validation of _get_entity_hierarchy method for Metric object.
         :return: None
         """
 
