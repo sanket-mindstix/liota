@@ -40,6 +40,7 @@ from liota.lib.transports.mqtt import MqttMessagingAttributes, QoSDetails
 from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.lib.utilities.identity import Identity
 from liota.lib.utilities.tls_conf import TLSConf
+from liota.lib.utilities.utility import systemUUID
 
 # MQTT configurations
 config = {}
@@ -121,6 +122,16 @@ class MQTTTest(unittest.TestCase):
         self.tls_version = "PROTOCOL_TLSv1"
         self.cipher = None
 
+        # Encapsulate the authentication details
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
+
+        # Encapsulate TLS parameters
+        self.tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
+
+        # Encapsulate QoS related parameters
+        self.qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+
     def tearDown(self):
         """
         Method to cleanup the resource created during the execution of test case.
@@ -158,6 +169,15 @@ class MQTTTest(unittest.TestCase):
         self.tls_version = None
         self.cipher = None
 
+        # Identity
+        self.identity = None
+
+        # TLS configurations
+        self.tls_conf = None
+
+        # QoS configurations
+        self.qos_details = None
+
     @mock.patch.object(Mqtt, 'connect_soc')
     def test_mqtt_init(self, mock_connect):
         """
@@ -169,19 +189,10 @@ class MQTTTest(unittest.TestCase):
         # Mocked connect_soc method
         mock_connect.returnvalue = None
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
                            self.enable_authentication, self.connection_disconnect_timeout)
+
         # Check we are able to generate Mqtt class object
         self.assertIsInstance(mqtt_client, Mqtt, "Invalid Mqtt class implementation")
 
@@ -199,19 +210,10 @@ class MQTTTest(unittest.TestCase):
         # Clean session flag as False
         self.client_clean_session = False
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
                            self.enable_authentication, self.connection_disconnect_timeout)
+
         # Check we are able to generate Mqtt class object
         self.assertIsInstance(mqtt_client, Mqtt, "Invalid Mqtt class implementation")
 
@@ -222,19 +224,14 @@ class MQTTTest(unittest.TestCase):
         """
         # Setting invalid root ca path
         self.root_ca_cert = "Invalid Root CA Path"
+
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid root ca_certs
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -245,19 +242,14 @@ class MQTTTest(unittest.TestCase):
         """
         # Setting invalid root ca path
         self.root_ca_cert = ""
+
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid root ca_certs
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -270,18 +262,12 @@ class MQTTTest(unittest.TestCase):
         self.client_cert_file = "Invalid Client CA Path"
 
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid client ca_certs
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -292,19 +278,14 @@ class MQTTTest(unittest.TestCase):
         """
         # Setting invalid client ca path
         self.client_cert_file = ""
+
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid client ca_certs
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -317,18 +298,12 @@ class MQTTTest(unittest.TestCase):
         self.client_key_file = "Invalid Client Key Path"
 
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid client key
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -341,18 +316,12 @@ class MQTTTest(unittest.TestCase):
         self.client_key_file = ""
 
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid client cert
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -363,18 +332,12 @@ class MQTTTest(unittest.TestCase):
         """
 
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, "", self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, "", self.mqtt_password,
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for invalid username
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -385,18 +348,12 @@ class MQTTTest(unittest.TestCase):
         """
 
         # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, "",
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, "",
+                                 self.client_cert_file, self.client_key_file)
 
         # Checking whether implementation raising the ValueError for empty password
         with self.assertRaises(ValueError):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -414,17 +371,7 @@ class MQTTTest(unittest.TestCase):
         Client.connect = mocked_connect
         Client.loop_start = mocked_loop_start
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
                            self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -446,19 +393,9 @@ class MQTTTest(unittest.TestCase):
         Client.loop_start = mocked_loop_start
         Client.loop_stop = mocked_loop_stop
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
         # Checking whether implementation raising the Exception for broker timeout
         with self.assertRaises(Exception):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -477,19 +414,9 @@ class MQTTTest(unittest.TestCase):
         Client.loop_start = mocked_loop_start
         Client.loop_stop = mocked_loop_stop
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
         # Checking whether implementation raising the Exception for broker connection refused
         with self.assertRaises(Exception):
-            Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                  self.client_clean_session, self.user_data, self.protocol, self.transport,
                  self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -500,6 +427,9 @@ class MQTTTest(unittest.TestCase):
         """
         global connect_rc
 
+        # Encapsulate the authentication details
+        self.identity = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password, None, None)
+
         # Setting connection accepted flag
         connect_rc = 0
 
@@ -507,16 +437,7 @@ class MQTTTest(unittest.TestCase):
         Client.connect = mocked_connect
         Client.loop_start = mocked_loop_start
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password, None, None)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
                            self.enable_authentication, self.connection_disconnect_timeout)
         # Check we are able to generate Mqtt class object
@@ -533,23 +454,16 @@ class MQTTTest(unittest.TestCase):
         # Mocked connect_soc method
         mock_connect.returnvalue = None
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
                            self.enable_authentication, self.connection_disconnect_timeout)
+
         # Check we are able to generate Mqtt class object
         self.assertIsInstance(mqtt_client, Mqtt, "Invalid Mqtt class implementation")
 
         client_id = mqtt_client.get_client_id()
+
+        # Checking the client_id implementation
         self.assertEqual(self.client_id, client_id, "Received invalid client-id, check the implementation.")
 
     def test_clean_disconnect_connection(self):
@@ -570,17 +484,7 @@ class MQTTTest(unittest.TestCase):
         Client.loop_start = mocked_loop_start
         Client.loop_stop = mocked_loop_stop
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
                            self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -604,19 +508,9 @@ class MQTTTest(unittest.TestCase):
         Client.loop_start = mocked_loop_start
         Client.loop_stop = mocked_loop_stop
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
         # Checking whether implementation raising the Exception for broker disconnect timeout
         with self.assertRaises(Exception):
-            mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                                self.client_clean_session, self.user_data, self.protocol, self.transport,
                                self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -640,19 +534,9 @@ class MQTTTest(unittest.TestCase):
         Client.loop_start = mocked_loop_start
         Client.loop_stop = mocked_loop_stop
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
         # Checking whether implementation raising the Exception for broker disconnect
         with self.assertRaises(Exception):
-            mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+            mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                                self.client_clean_session, self.user_data, self.protocol, self.transport,
                                self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -665,17 +549,8 @@ class MQTTTest(unittest.TestCase):
         Test case to test publish method of Mqtt class.
         :return: None
         """
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
 
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
                            self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -694,17 +569,7 @@ class MQTTTest(unittest.TestCase):
         :return: None
         """
 
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
-        qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
-
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
                            self.client_clean_session, self.user_data, self.protocol, self.transport,
                            self.keep_alive, self.enable_authentication, self.connection_disconnect_timeout)
 
@@ -717,22 +582,76 @@ class MQTTTest(unittest.TestCase):
         # Check underline message_callback_add is called with correct parameters
         mocked_callback_add.assert_called_with("test/subscribe", topic_subscribe_callback)
 
-    def test_QoS_class_implementation(self):
+    @mock.patch.object(Mqtt, 'connect_soc')
+    def test_mqtt_callback_methods(self, mock_connect):
         """
-        Test case to test the implementation of QoSDetails class.
+        Test case to test the implementation of all callback methods of the Mqtt class
         :return: None
         """
 
-        self.assertIsInstance(QoSDetails(self.inflight, self.queue_size, self.retry), QoSDetails,
-                              "Invalid implementation for QoSDetails class")
+        # Mocked connect_soc method
+        mock_connect.returnvalue = None
 
-    def test_mqtt_messaging_attributes_implementation_for_gateway_name(self):
+        test_pub_message = MQTTMessage(1, "test/topic")
+
+        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
+                           self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
+                           self.enable_authentication, self.connection_disconnect_timeout)
+
+        on_message_called = mqtt_client.on_message(self.client_id, self.user_data, test_pub_message)
+
+        on_publish_called = mqtt_client.on_publish(self.client_id, self.user_data, 1)
+
+        on_subscribe_called = mqtt_client.on_subscribe(self.client_id, self.user_data, 1, 1)
+
+        on_unsubscribe_called = mqtt_client.on_unsubscribe(self.client_id, self.user_data, 1)
+
+        # Check on_message called successfully
+        self.assertEqual(on_message_called, None, "Check implementation of on_message method")
+
+        # Check on_publish called successfully
+        self.assertEqual(on_publish_called, None, "Check implementation of on_publish method")
+
+        # Check on_subscribe called successfully
+        self.assertEqual(on_subscribe_called, None, "Check implementation of on_subscribe method")
+
+        # Check on_unsubscribe called successfully
+        self.assertEqual(on_unsubscribe_called, None, "Check implementation of on_unsubscribe method")
+
+
+class MqttMessagingAttributesTest(unittest.TestCase):
+    def setUp(self):
         """
-        Test case to test the implementation of MqttMessagingAttributes class for automatic topic generation.
+        Method to initialise the MqttMessagingAttributes class parameters.
         :return: None
         """
-        self.assertIsInstance(MqttMessagingAttributes(self.edge_system.name), MqttMessagingAttributes,
-                              "Invalid implementation for MqttMessagingAttributes")
+        # EdgeSystem name
+        self.edge_system = Dell5KEdgeSystem("TestEdgeSystem")
+
+    def tearDown(self):
+        """
+        Method to cleanup the resource created during the execution of test case.
+        :return: None
+        """
+        self.edge_system = None
+
+    def test_mqtt_messaging_attributes_implementation_for_edge_system_name(self):
+        """
+        Test case to test the implementation of MqttMessagingAttributes class for automatic topic generation for publish
+        and subscribe.
+        :return: None
+        """
+
+        # Create MqttMessagingAttributes class object
+        mqtt_messaging_attribute = MqttMessagingAttributes(self.edge_system.name)
+
+        # Check whether correct topic generated for publish
+        self.assertEqual(mqtt_messaging_attribute.pub_topic, 'liota/' + systemUUID().get_uuid(self.edge_system.name)
+                         + "/request")
+
+        # Check correct topic generated for subscribe
+        self.assertEqual(mqtt_messaging_attribute.sub_topic, 'liota/' +
+                         systemUUID().get_uuid(self.edge_system.name) + "/response")
 
     def test_validation_of_sub_qos_mqtt_messaging_attributes(self):
         """
@@ -770,51 +689,43 @@ class MQTTTest(unittest.TestCase):
         """
         self.assertRaises(ValueError, MqttMessagingAttributes)
 
-    @mock.patch.object(Mqtt, 'connect_soc')
-    def test_mqtt_callback_methods(self, mock_connect):
+
+class QoSDetailsTest(unittest.TestCase):
+    def setUp(self):
         """
-        Test case to test the implementation of all callback methods of the Mqtt class
+        Method to initialise the QoSDetails class parameters.
         :return: None
         """
+        # QoS details
+        self.retry = 5
+        self.inflight = 20
+        self.queue_size = 0
 
-        # Mocked connect_soc method
-        mock_connect.returnvalue = None
+    def tearDown(self):
+        """
+        Method to cleanup the resource created during the execution of test case.
+        :return: None
+        """
+        # QoS details
+        self.retry = None
+        self.inflight = None
+        self.queue_size = None
 
-        test_pub_message = MQTTMessage(1, "test/topic")
-
-        # Encapsulate the authentication details
-        credentials = Identity(self.root_ca_cert, self.mqtt_username, self.mqtt_password,
-                               self.client_cert_file, self.client_key_file)
-
-        # Encapsulate TLS parameters
-        tls_conf = TLSConf(self.cert_required, self.tls_version, self.cipher)
-
-        # Encapsulate QoS related parameters
+    def test_QoS_class_implementation(self):
+        """
+        Test case to test the implementation of QoSDetails class.
+        :return: None
+        """
         qos_details = QoSDetails(self.inflight, self.queue_size, self.retry)
 
-        mqtt_client = Mqtt(self.url, self.port, credentials, tls_conf, qos_details, self.client_id,
-                           self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
-                           self.enable_authentication, self.connection_disconnect_timeout)
+        # Check value of retry
+        self.assertEqual(qos_details.retry, self.retry, "Invalid implementation for QoSDetails class")
 
-        on_message_called = mqtt_client.on_message(self.client_id, self.user_data, test_pub_message)
+        # Check value of inflight
+        self.assertEqual(qos_details.in_flight, self.inflight, "Invalid implementation for QoSDetails class")
 
-        on_publish_called = mqtt_client.on_publish(self.client_id, self.user_data, 1)
-
-        on_subscribe_called = mqtt_client.on_subscribe(self.client_id, self.user_data, 1, 1)
-
-        on_unsubscribe_called = mqtt_client.on_unsubscribe(self.client_id, self.user_data, 1)
-
-        # Check on_message called successfully
-        self.assertEqual(on_message_called, None, "Check implementation of on_message method")
-
-        # Check on_publish called successfully
-        self.assertEqual(on_publish_called, None, "Check implementation of on_publish method")
-
-        # Check on_subscribe called successfully
-        self.assertEqual(on_subscribe_called, None, "Check implementation of on_subscribe method")
-
-        # Check on_unsubscribe called successfully
-        self.assertEqual(on_unsubscribe_called, None, "Check implementation of on_unsubscribe method")
+        # Check value of queue_size
+        self.assertEqual(qos_details.queue_size, self.queue_size, "Invalid implementation for QoSDetails class")
 
 
 if __name__ == '__main__':
