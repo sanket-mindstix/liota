@@ -32,15 +32,17 @@
 
 import unittest
 import sys
-import mock
 
-from paho.mqtt.client import Client, MQTTMessage
+import mock
+from paho.mqtt.client import Client
+
 from liota.lib.transports.mqtt import Mqtt
 from liota.lib.transports.mqtt import MqttMessagingAttributes, QoSDetails
 from liota.entities.edge_systems.dell5k_edge_system import Dell5KEdgeSystem
 from liota.lib.utilities.identity import Identity
 from liota.lib.utilities.tls_conf import TLSConf
 from liota.lib.utilities.utility import systemUUID
+
 
 # MQTT configurations
 config = {}
@@ -57,11 +59,6 @@ def mocked_connect(self, *args, **kwargs):
 # Monkey patched disconnect method of Paho client
 def mocked_disconnect(self):
     self.on_disconnect(config["client_id"], None, disconnect_rc)
-
-
-# Monkey patched Mqtt class constructor
-def mocked_mqtt_init(self, *args, **kwargs):
-    pass
 
 
 # Monkey patched loop_start method of Paho client
@@ -81,7 +78,7 @@ def topic_subscribe_callback(self, *args, **kwargs):
 
 class MQTTTest(unittest.TestCase):
     """
-    MQTT library unit test cases
+    MQTT transport unit test cases
     """
 
     def setUp(self):
@@ -582,42 +579,6 @@ class MQTTTest(unittest.TestCase):
         # Check underline message_callback_add is called with correct parameters
         mocked_callback_add.assert_called_with("test/subscribe", topic_subscribe_callback)
 
-    @mock.patch.object(Mqtt, 'connect_soc')
-    def test_mqtt_callback_methods(self, mock_connect):
-        """
-        Test case to test the implementation of all callback methods of the Mqtt class
-        :return: None
-        """
-
-        # Mocked connect_soc method
-        mock_connect.returnvalue = None
-
-        test_pub_message = MQTTMessage(1, "test/topic")
-
-        mqtt_client = Mqtt(self.url, self.port, self.identity, self.tls_conf, self.qos_details, self.client_id,
-                           self.client_clean_session, self.user_data, self.protocol, self.transport, self.keep_alive,
-                           self.enable_authentication, self.connection_disconnect_timeout)
-
-        on_message_called = mqtt_client.on_message(self.client_id, self.user_data, test_pub_message)
-
-        on_publish_called = mqtt_client.on_publish(self.client_id, self.user_data, 1)
-
-        on_subscribe_called = mqtt_client.on_subscribe(self.client_id, self.user_data, 1, 1)
-
-        on_unsubscribe_called = mqtt_client.on_unsubscribe(self.client_id, self.user_data, 1)
-
-        # Check on_message called successfully
-        self.assertEqual(on_message_called, None, "Check implementation of on_message method")
-
-        # Check on_publish called successfully
-        self.assertEqual(on_publish_called, None, "Check implementation of on_publish method")
-
-        # Check on_subscribe called successfully
-        self.assertEqual(on_subscribe_called, None, "Check implementation of on_subscribe method")
-
-        # Check on_unsubscribe called successfully
-        self.assertEqual(on_unsubscribe_called, None, "Check implementation of on_unsubscribe method")
-
 
 class MqttMessagingAttributesTest(unittest.TestCase):
     def setUp(self):
@@ -652,6 +613,21 @@ class MqttMessagingAttributesTest(unittest.TestCase):
         # Check correct topic generated for subscribe
         self.assertEqual(mqtt_messaging_attribute.sub_topic, 'liota/' +
                          systemUUID().get_uuid(self.edge_system.name) + "/response")
+
+    def test_mqtt_messaging_attributes_implementation_without_edge_system_name(self):
+        """
+        Test case to test the implementation of MqttMessagingAttributes class for provided sub/pub topics.
+        :return: None
+        """
+
+        # Create MqttMessagingAttributes class object
+        mqtt_messaging_attribute = MqttMessagingAttributes(pub_topic="test/pub/topic", sub_topic="test/sub/topic")
+
+        # Check whether provided topic used for publish
+        self.assertEqual(mqtt_messaging_attribute.pub_topic, "test/pub/topic")
+
+        # Check whether provided topic used for subscribe
+        self.assertEqual(mqtt_messaging_attribute.sub_topic, "test/sub/topic")
 
     def test_validation_of_sub_qos_mqtt_messaging_attributes(self):
         """
