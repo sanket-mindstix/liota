@@ -30,9 +30,9 @@
 #  THE POSSIBILITY OF SUCH DAMAGE.                                            #
 # ----------------------------------------------------------------------------#
 
+import Queue
 import unittest
 from threading import Thread
-import Queue
 
 import mock
 from aenum import UniqueEnum
@@ -133,6 +133,7 @@ class SensorTagDeviceTest(unittest.TestCase):
 
 class SensorTagCollectorTest(unittest.TestCase):
     """Unit test cases for SensorTagCollector class"""
+
     def setUp(self):
         """
         Method to initialise the parameters required for SensorTagCollector class and creating the object of it.
@@ -144,9 +145,9 @@ class SensorTagCollectorTest(unittest.TestCase):
 
         with mock.patch.object(SensorTagCollector, "_re_connect") as mock_reconnect, \
                 mock.patch.object(Thread, "start") as mock_start:
-                self.temp_sensor_collector = SensorTagCollector(self.device_name, self.device_mac,
-                                                                sensors=self.test_sensors, sampling_interval_sec=1,
-                                                                retry_interval_sec=1)
+            self.temp_sensor_collector = SensorTagCollector(self.device_name, self.device_mac,
+                                                            sensors=self.test_sensors, sampling_interval_sec=1,
+                                                            retry_interval_sec=1)
 
     def tearDown(self):
         """
@@ -379,12 +380,12 @@ class SensorTagCollectorTest(unittest.TestCase):
         """
 
         with mock.patch("liota.entities.devices.sensor_tag.SensorTag") as mock_lm:
-                # Creating the SensorTagCollector object
-                self.temp_sensor_collector = SensorTagCollector(self.device_name, self.device_mac,
-                                                                sensors=[Sensors.TEMPERATURE], sampling_interval_sec=0.1
-                                                                , retry_interval_sec=0.1)
-                # Check mocked method call has been made from _enable
-                mocked_enable_temperature.assert_called()
+            # Creating the SensorTagCollector object
+            self.temp_sensor_collector = SensorTagCollector(self.device_name, self.device_mac,
+                                                            sensors=[Sensors.TEMPERATURE], sampling_interval_sec=0.1
+                                                            , retry_interval_sec=0.1)
+            # Check mocked method call has been made from _enable
+            mocked_enable_temperature.assert_called()
 
     @mock.patch.object(Thread, 'start')
     @mock.patch.object(SensorTagCollector, "_enable_humidity")
@@ -508,8 +509,8 @@ class SensorTagCollectorTest(unittest.TestCase):
     @mock.patch.object(SensorTagCollector, "_enable_battery_level")
     @mock.patch.object(SensorTagCollector, "_enable_lightmeter")
     def test_enable_implementation_all_sensor(self, _enable_lightmeter, _enable_battery_level, _enable_gyroscope
-                                                      , _enable_magnetometer, _enable_accelerometer, _enable_barometer,
-                                                      _enable_humidity, _enable_temperature, mocked_start):
+                                              , _enable_magnetometer, _enable_accelerometer, _enable_barometer,
+                                              _enable_humidity, _enable_temperature, mocked_start):
         """
         Test case to test the implementation of _enable method with all available sensors.
         :return: None
@@ -560,7 +561,6 @@ class SensorTagCollectorTest(unittest.TestCase):
 
         with mock.patch("liota.entities.devices.sensor_tag.SensorTag") as mock_lm, \
                 mock.patch.object(SensorTag, "disconnect") as disconnect:
-
             # Creating the SensorTagCollector
             self.temp_sensor_collector = SensorTagCollector(self.device_name, self.device_mac,
                                                             sensors=[Sensors.LIGHTMETER], sampling_interval_sec=0.1
