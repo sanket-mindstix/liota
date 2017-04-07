@@ -286,11 +286,11 @@ class MQTTTest(unittest.TestCase):
         """
 
         # Assigning the return value for mocked methods
+        # To ensure os.path.exists returns True for the root_ca_cert file.
         exists.return_value = True
         tls_set.return_value = None
 
         # Setting invalid client cert path
-        # To ensure os.path.exists returns True for the root_ca_cert file.
         self.client_key_file = ""
 
         # Encapsulate the authentication details
