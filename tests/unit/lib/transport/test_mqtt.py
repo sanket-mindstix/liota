@@ -255,11 +255,12 @@ class MQTTTest(unittest.TestCase):
     @mock.patch.object(os.path, "exists")
     def test_connect_soc_empty_client_ca(self, exists, tls_set):
         """
-        Test case to test validation for empty client certificate.
+        Test case to test validation for empty client certificate. 
         :return: None
         """
 
-        # Assigning the return value for mocked methods
+        # Assigning the return value for mocked methods.
+        # To ensure os.path.exists returns True for the root_ca_cert file.
         exists.return_value = True
         tls_set.return_value = None
 
@@ -289,6 +290,7 @@ class MQTTTest(unittest.TestCase):
         tls_set.return_value = None
 
         # Setting invalid client cert path
+        # To ensure os.path.exists returns True for the root_ca_cert file.
         self.client_key_file = ""
 
         # Encapsulate the authentication details
@@ -552,7 +554,7 @@ class MQTTTest(unittest.TestCase):
         Client.connect = mocked_connect
         Client.disconnect = mocked_disconnect
         Client.loop_start = mocked_loop_start
-        # Client.loop_stop = mocked_loop_stop
+
 
         # Checking whether implementation raising the Exception for broker disconnect timeout
         with self.assertRaises(Exception):
