@@ -127,10 +127,14 @@ class MqttDccCommsTest(unittest.TestCase):
         Clean up all parameters used in test cases
         :return: None
         """
-        try:
-            os.remove(self.uuid_file)
-        except OSError as e:
-            log.error("Unable to remove UUID file" + str(e))
+
+        # Check path exists
+        if os.path.exists(self.uuid_file):
+            try:
+                # Remove the file
+                os.remove(self.uuid_file)
+            except OSError as e:
+                log.error("Unable to remove UUID file" + str(e))
 
         self.config = None
         self.uuid_file = None
@@ -258,12 +262,15 @@ class MqttDccCommsTest(unittest.TestCase):
         """
 
         # Test with valid messaging attributes
-        MqttDccComms(edge_system_name=self.edge_system.name,
-                     url=self.url, port=self.port, client_id="", clean_session=self.clean_session,
-                     mqtt_msg_attr=self.mqtt_msg_attr)
+        mqtt_dcc_client = MqttDccComms(edge_system_name=self.edge_system.name,
+                                       url=self.url, port=self.port, client_id="", clean_session=self.clean_session,
+                                       mqtt_msg_attr=self.mqtt_msg_attr)
 
         # Check uuid file get created or not
         self.assertFalse(os.path.exists(self.uuid_file))
+
+        # Validate the client id
+        self.assertEqual(mqtt_dcc_client.client_id, "")
 
         # Check connect_soc call has been made
         mock_connect.assert_called()
@@ -318,17 +325,16 @@ class MqttDccCommsTest(unittest.TestCase):
     @mock.patch.object(Mqtt, 'publish')
     def test_send_with_msg_attr(self, mock_publish):
         """
-        Test MqttDccComms publish method with messaging attributes
+        Test MqttDccComms send method with messaging attributes
         :param mock_publish: Mocked MQTT publish method
         :return: None
         """
 
-        # Create subscribe MqttMessagingAttributes
-        mqtt_msg_attr = MqttMessagingAttributes(pub_topic="publish-topic", sub_topic="subscribe-topic", sub_qos=1,
-                                                sub_callback=callback_function, pub_retain=False)
+        # Create publish MqttMessagingAttributes
+        mqtt_msg_attr = MqttMessagingAttributes(pub_topic="test/publish_topic", pub_qos=2, pub_retain=True)
 
         # Call MqttDccComms send method
-        self.client.send(message=self.publish_message, msg_attr=self.mqtt_msg_attr)
+        self.client.send(message=self.publish_message, msg_attr=mqtt_msg_attr)
 
         # Check implementation calling Mqtt publish method with following params
         mock_publish.assert_called_with(mqtt_msg_attr.pub_topic, self.publish_message,
@@ -337,7 +343,7 @@ class MqttDccCommsTest(unittest.TestCase):
     @mock.patch.object(Mqtt, 'publish')
     def test_send_without_msg_attr(self, mock_publish):
         """
-        Test MqttDccComms publish method without messaging attributes
+        Test MqttDccComms send method without messaging attributes
         :param mock_publish: Mocked MQTT publish method
         :return: None
         """
@@ -354,13 +360,16 @@ class MqttDccCommsTest(unittest.TestCase):
         Test MqttDccComms receive method implementation with msg_attr.
         :return: None 
         """
+        # Create subscribe MqttMessagingAttributes messaging attribute
+        mqtt_msg_attr = MqttMessagingAttributes(self.edge_system.name, sub_topic="test/subscribe_topic", sub_qos=2,
+                                                sub_callback=callback_function)
 
         # Call receive with mqtt_msg_attr
-        self.client.receive(self.mqtt_msg_attr)
+        self.client.receive(mqtt_msg_attr)
 
         # Check underline subscribe called with following parameters
-        mocked_subscribe.assert_called_with(self.mqtt_msg_attr.sub_topic, self.mqtt_msg_attr.sub_qos,
-                                            self.mqtt_msg_attr.sub_callback)
+        mocked_subscribe.assert_called_with(mqtt_msg_attr.sub_topic, mqtt_msg_attr.sub_qos,
+                                            mqtt_msg_attr.sub_callback)
 
     @mock.patch.object(Mqtt, 'subscribe')
     def test_receive_without_msg_attr(self, mocked_subscribe):
