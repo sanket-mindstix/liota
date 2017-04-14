@@ -753,7 +753,6 @@ class QoSDetailsTest(unittest.TestCase):
 
         # Check value of queue_size
         self.assertEqual(qos_details.queue_size, self.queue_size, "Invalid implementation for QoSDetails class")
-        self.assertTrue(False)
 
 if __name__ == '__main__':
     unittest.main(verbosity=1)
