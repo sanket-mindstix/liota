@@ -35,6 +35,7 @@ import logging
 import os
 import unittest
 from ConfigParser import ConfigParser
+import platform
 
 import mock
 import paho.mqtt.client as paho
@@ -412,6 +413,12 @@ class MqttDccCommsTest(unittest.TestCase):
         Test MqttDccComms receive_message method implementation.
         :return: None 
         """
+        
+        print("#################")
+        platform.python_version()
+        print("#################")
+        
+        
         # Creating the MQTTMessage
         message = paho.MQTTMessage(topic="test/subscribe")
 
