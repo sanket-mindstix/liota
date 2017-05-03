@@ -415,7 +415,7 @@ class MqttDccCommsTest(unittest.TestCase):
         """
         
         print("#################")
-        platform.python_version()
+        print(platform.python_version())
         print("#################")
         
         
